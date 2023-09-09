@@ -1,7 +1,5 @@
 import numpy as np
-# Matplotlib is used for visualization
 import matplotlib.pyplot as plt
-from matplotlib.patches import Circle, Polygon
 
 # Constants of the Planet
 G = 6.67430e-11  # (m^3/kg/s^2)
@@ -9,34 +7,31 @@ planet_mass = 5.972e24  # Earth(kg)
 
 # Constants of the SpaceCraft
 spacecraft_mass = 1000  # (kg)
-initial_velocity = 10000  # (m/s)
+initial_x_velocity = 8000  # (m/s)
+initial_y_velocity = 0  # (m/s)
 initial_position = np.array([0, 6371000 + 100000])  # (m)
+
+# Espace velocity
+R = 63710000 + 100000
+escape_velocity = np.sqrt(2 * G * planet_mass / R)
 
 # Simulation Parameters
 dt = 1  # Time stamp to one second, updating position and velocity of the spacecraft
 total_time = 24 * 3600
 num_steps = int(total_time / dt)  # Number of time steps
 
-# Create a figure and axis for the plot
-fig, ax = plt.subplots()
-ax.set_facecolor('black')
-
-# Visualization of the planet
-planet_x = 0
-planet_y = 0
-planet_radius = 6.371e6  # Earth's radius in meters
-planet_circle = Circle((planet_x, planet_y), planet_radius, color='blue')
-ax.add_patch(planet_circle)
-
 # Store positions and velocity
 positions = np.zeros((num_steps, 2))
 velocities = np.zeros((num_steps, 2))
 
+# Initial Velocity
+velocities[0] = np.array([initial_x_velocity, initial_y_velocity])
+positions[0] = initial_position
+
 # Simulation
-for step in range(num_steps):
+for step in range(1, num_steps):
     # Calculate gravitational force acting on the spacecraft at its current position
-    # r means position of an object relative to a reference point.
-    r = positions[step]  # Current position
+    r = positions[step - 1]  # Current position
     r_norm = np.linalg.norm(r)  # Calculate the Euclidean norm
 
     # Check if r_norm is zero; if so, set the force to zero
@@ -52,22 +47,24 @@ for step in range(num_steps):
     velocities[step] = velocities[step-1] + (F_gravity / spacecraft_mass) * dt
     positions[step] = positions[step-1] + velocities[step] * dt
 
-    # Visualization of the spacecraft as a triangle (you can adjust its size and appearance)
-    spacecraft_x, spacecraft_y = positions[step]
-    spacecraft_triangle = Polygon([[spacecraft_x, spacecraft_y + 1e4],
-                                   [spacecraft_x + 1e4, spacecraft_y - 1e4],
-                                   [spacecraft_x - 1e4, spacecraft_y - 1e4]],
-                                  closed=True,
-                                  facecolor='red')
-    ax.add_patch(spacecraft_triangle)
+    # Debugging print statements
+    if step % 1000 == 0:
+        print(
+            f"Step {step}: Position = {positions[step]}, Velocity = {velocities[step]}")
 
-# Set axis limits for the plot
-ax.set_xlim(-2e6, 2e6)
-ax.set_ylim(-2e6, 2e6)
-
-# Results
-plt.title("Gravity Assist Simulation")
+# Visualize the results
+plt.figure(figsize=(10, 5))
+plt.subplot(1, 2, 1)
+plt.plot(positions[:, 0], positions[:, 1])
+plt.title("Spacecraft Trajectory")
 plt.xlabel("X Position (m)")
 plt.ylabel("Y Position (m)")
 
+plt.subplot(1, 2, 2)
+plt.plot(np.arange(0, total_time, dt), np.linalg.norm(velocities, axis=1))
+plt.title("Spacecraft Velocity")
+plt.xlabel("Time (s)")
+plt.ylabel("Velocity (m/s)")
+
+plt.tight_layout()
 plt.show()
