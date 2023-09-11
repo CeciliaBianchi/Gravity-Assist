@@ -1,22 +1,29 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-# Constants of the Planet
-G = 6.67430e-11  # (m^3/kg/s^2)
-planet_mass = 5.972e24  # Earth(kg)
-
 # Constants of the SpaceCraft
 spacecraft_mass = 1000  # (kg)
 initial_x_velocity = 8000  # (m/s)
 initial_y_velocity = 0  # (m/s)
 initial_position = np.array([0, 6371000 + 100000])  # (m)
 
+# Constants of the Planet
+G = 6.67430e-11  # (m^3/kg/s^2)
+planet_mass = 5.972e24  # Earth(kg)
+
+# Multiple planet data
+planet_data = [
+    {"name": "Earth", "mass": 5.972e24, "radius": 6371000 + 100000},
+    {"name": "Mars", "mass": 6.39e23, "radius": 3.37e6}
+]
+
 # Espace velocity
-R = 63710000 + 100000
-escape_velocity = np.sqrt(2 * G * planet_mass / R)
+# R = 63710000 + 100000
+# escape_velocity = np.sqrt(2 * G * planet_mass / R)
 
 # Simulation Parameters
-dt = 1  # Time stamp to one second, updating position and velocity of the spacecraft
+G = 6.67430e-11
+dt = 1  # Time stamp
 total_time = 24 * 3600
 num_steps = int(total_time / dt)  # Number of time steps
 
@@ -30,21 +37,30 @@ positions[0] = initial_position
 
 # Simulation
 for step in range(1, num_steps):
-    # Calculate gravitational force acting on the spacecraft at its current position
-    r = positions[step - 1]  # Current position
-    r_norm = np.linalg.norm(r)  # Calculate the Euclidean norm
+    # Calculate gravitational force
+    total_force = np.array([0.0, 0.0])  # Initialize total force to zero
 
-    # Check if r_norm is zero; if so, set the force to zero
-    if r_norm == 0:
-        F_gravity = np.array([0, 0])
-    else:
-        # Formula for gravitational force, -G because the force is attracting the spacecraft towards the planet
-        # r_norm**3 -> inverse cube of the distance r_norm
-        # * r -> direction of the force
-        F_gravity = -G * (spacecraft_mass * planet_mass / r_norm**3) * r
+    for planet in planet_data:
+        planet_mass = planet["mass"]
+        planet_radius = planet["radius"]
+        planet_position = np.array([0, 0])
+        planet_position[1] = planet_radius
+
+        r = planet_position - positions[step - 1]  # Current position
+        r_norm = np.linalg.norm(r)  # Calculate the Euclidean norm
+
+        # Check if r_norm is zero; if so, set the force to zero
+        if r_norm == 0:
+            F_gravity = np.array([0, 0])
+        else:
+            F_gravity = -G * (spacecraft_mass * planet_mass / r_norm**3) * r
+        total_force += F_gravity
+
+    print(f"Step {step}: Total Force = {total_force}")
 
     # Update velocity and position
-    velocities[step] = velocities[step-1] + (F_gravity / spacecraft_mass) * dt
+    velocities[step] = velocities[step-1] + \
+        (total_force / spacecraft_mass) * dt
     positions[step] = positions[step-1] + velocities[step] * dt
 
     # Debugging print statements
@@ -61,7 +77,7 @@ plt.xlabel("X Position (m)")
 plt.ylabel("Y Position (m)")
 
 plt.subplot(1, 2, 2)
-plt.plot(np.arange(0, total_time, dt), np.linalg.norm(velocities, axis=1))
+plt.plot(np.arange(0, total_time, dt), -np.linalg.norm(velocities, axis=1))
 plt.title("Spacecraft Velocity")
 plt.xlabel("Time (s)")
 plt.ylabel("Velocity (m/s)")
