@@ -7,7 +7,7 @@ planet_mass = 5.972e24  # Earth(kg)
 
 # Constants of the SpaceCraft
 spacecraft_mass = 1000  # (kg)
-initial_x_velocity = 8000  # (m/s)
+initial_x_velocity = 10000  # (m/s)
 initial_y_velocity = 0  # (m/s)
 initial_position = np.array([0, 6371000 + 100000])  # (m)
 
