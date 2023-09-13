@@ -17,10 +17,6 @@ planet_data = [
     {"name": "Mars", "mass": 6.39e23, "radius": 3.37e6}
 ]
 
-# Espace velocity
-# R = 63710000 + 100000
-# escape_velocity = np.sqrt(2 * G * planet_mass / R)
-
 # Simulation Parameters
 G = 6.67430e-11
 dt = 1  # Time stamp
@@ -34,6 +30,9 @@ velocities = np.zeros((num_steps, 2))
 # Initial Velocity
 velocities[0] = np.array([initial_x_velocity, initial_y_velocity])
 positions[0] = initial_position
+
+# Flag spacecraft has enter Mars' sphere of influence
+mars_soi_entered = False
 
 # Simulation
 for step in range(1, num_steps):
@@ -62,6 +61,16 @@ for step in range(1, num_steps):
     velocities[step] = velocities[step-1] + \
         (total_force / spacecraft_mass) * dt
     positions[step] = positions[step-1] + velocities[step] * dt
+
+    # Check if spacecraft enters Mars' sphere of influence
+    if not mars_soi_entered and np.linalg.norm(positions[step] - planet_data[1]["radius"]) < planet_data[1]["radius"]:
+        mars_soi_entered = True
+        # Adjust the spacecraft velocity for gravity assist from Mars
+        v_infinity = np.linalg.norm(velocities[step] - velocities[step - 1])
+        v_escape = np.sqrt(
+            2 * G * planet_data[1]["mass"] / planet_data[1]["radius"])
+        delta_v = v_escape - v_infinity
+        velocities[step] += delta_v
 
     # Debugging print statements
     if step % 1000 == 0:
